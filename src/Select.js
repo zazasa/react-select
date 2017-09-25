@@ -85,7 +85,6 @@ class Select extends React.Component {
 
 	componentWillReceiveProps (nextProps) {
 		const valueArray = this.getValueArray(nextProps.value, nextProps);
-
 		if (nextProps.required) {
 			this.setState({
 				required: this.handleRequired(valueArray[0], nextProps.multi),
@@ -299,7 +298,7 @@ class Select extends React.Component {
 		} else {
 			this.setState({
 				isOpen: false,
-				isPseudoFocused: this.state.isFocused && !this.props.multi
+				isPseudoFocused: this.state.isFocused && !this.props.multi,
 			});
 		}
 		this.hasScrolledToOption = false;
@@ -527,7 +526,7 @@ class Select extends React.Component {
 			});
 		} else {
 			this.setState({
-				inputValue: this.handleInputValueChange(''),
+				inputValue: '',
 				isOpen: !this.props.closeOnSelect,
 				isPseudoFocused: this.state.isFocused,
 			}, () => {

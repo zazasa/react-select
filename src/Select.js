@@ -236,6 +236,8 @@ type MenuOptions = {
 type State = {
   inputIsHidden: boolean,
   isFocused: boolean,
+  instructions: string,
+  feedback: string,
   focusedOption: OptionType | null,
   focusedValue: OptionType | null,
   menuOptions: MenuOptions,
@@ -271,6 +273,8 @@ export default class Select extends Component<Props, State> {
     isFocused: false,
     menuOptions: { render: [], focusable: [] },
     selectValue: [],
+    instructions: '',
+    feedback: '',
   };
   constructor(props: Props) {
     super(props);
@@ -367,9 +371,17 @@ export default class Select extends Component<Props, State> {
   // ==============================
 
   onMenuOpen() {
+    this.setState({
+      instructions: 'Use Up and Down to choose options, press Enter to select the currently focused option, press Escape to exit the menu, press Tab to select the option and exit the menu.',
+    });
     this.props.onMenuOpen();
   }
   onMenuClose() {
+    const { isSearchable } = this.props;
+    console.log('onMenuClose is being called');
+    this.setState({
+      instructions: `Select is focused, ${ isSearchable ? 'type to refine list' : '' } press Down to open the menu`,
+    });
     this.onInputChange('', { action: 'menu-close' });
     this.props.onMenuClose();
   }
@@ -822,12 +834,14 @@ export default class Select extends Component<Props, State> {
     this.onMenuOpen();
   };
   onInputFocus = (event: SyntheticFocusEvent<HTMLInputElement>) => {
+    const { isSearchable } = this.props;
     if (this.props.onFocus) {
       this.props.onFocus(event);
     }
     this.inputIsHiddenAfterUpdate = false;
     this.setState({
       isFocused: true,
+      instructions: `Select is focused, ${ isSearchable ? 'type to refine list' : '' } press Down to open the menu`,
     });
     if (this.openAfterFocus || this.props.openMenuOnFocus) {
       this.openMenu('first');
@@ -835,6 +849,7 @@ export default class Select extends Component<Props, State> {
     this.openAfterFocus = false;
   };
   onInputBlur = (event: SyntheticFocusEvent<HTMLInputElement>) => {
+    console.log('onInputBlur is being called');
     if (this.props.onBlur) {
       this.props.onBlur(event);
     }
@@ -843,6 +858,8 @@ export default class Select extends Component<Props, State> {
     this.setState({
       focusedValue: null,
       isFocused: false,
+      instructions: ' ',
+      feedback: ' ',
     });
   };
   onOptionHover = (focusedOption: OptionType) => {
@@ -1060,23 +1077,29 @@ export default class Select extends Component<Props, State> {
   // ==============================
   // Renderers
   // ==============================
-
-  renderScreenReaderStatus() {
+  renderAssertive () {
     const { screenReaderStatus } = this.props;
     return (
-      <A11yText aria-atomic="true" aria-live="polite" role="status">
-        {screenReaderStatus({ count: this.countOptions() })}
+      <A11yText aria-live="assertive" aria-relevant="all" aria-atomic="true">
+        &nbsp;{screenReaderStatus({ count: this.countOptions() })}
+      </A11yText>
+    );
+  }
+
+  renderScreenReaderStatus() {
+    const { instructions } = this.state;
+    return (
+      <A11yText aria-live="polite" aria-relevant="all" aria-atomic="true">
+        &nbsp;{instructions}
       </A11yText>
     );
   }
   renderInput() {
     const {
       isDisabled,
-      isLoading,
       isSearchable,
       inputId,
       inputValue,
-      menuIsOpen,
       tabIndex,
     } = this.props;
     const { Input } = this.components;
@@ -1103,12 +1126,8 @@ export default class Select extends Component<Props, State> {
     // aria attributes makes the JSX "noisy", separated for clarity
     const ariaAttributes = {
       'aria-autocomplete': 'list',
-      'aria-busy': isLoading,
-      'aria-expanded': menuIsOpen,
-      'aria-haspopup': menuIsOpen,
       'aria-label': this.props['aria-label'],
       'aria-labelledby': this.props['aria-labelledby'],
-      role: 'combobox',
     };
 
     const { cx } = this.commonProps;
@@ -1483,7 +1502,9 @@ export default class Select extends Component<Props, State> {
         isDisabled={isDisabled}
         isFocused={isFocused}
       >
-        {this.renderScreenReaderStatus()}
+
+          {isFocused ? this.renderAssertive() : null}
+          {isFocused ? this.renderScreenReaderStatus() : null}
         <Control
           {...commonProps}
           innerProps={{

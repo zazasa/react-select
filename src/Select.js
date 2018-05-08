@@ -312,7 +312,7 @@ export default class Select extends Component<Props, State> {
       const menuOptions = this.buildMenuOptions(nextProps, selectValue);
       const focusedValue = this.getNextFocusedValue(selectValue);
       const focusedOption = this.getNextFocusedOption(menuOptions.focusable);
-      this.announceStatus('feedback', focusedOption ? `${this.getOptionLabel(focusedOption)} option focused` : '');
+      this.getNextAnnouncement(nextProps, this.props, focusedOption);
       this.setState({ menuOptions, selectValue, focusedOption, focusedValue });
     }
     // some updates should toggle the state of the input visibility
@@ -322,6 +322,22 @@ export default class Select extends Component<Props, State> {
       });
       delete this.inputIsHiddenAfterUpdate;
     }
+  }
+  getNextAnnouncement ({ value: nextValue }: Props, { value }: Props, nextFocusedOption: OptionType) {
+    // If there is a new value, return;
+    if (value !== nextValue) {
+      return;
+    }
+    // If there is not a new value, check if the focusedOption has changed, if it has
+    if (nextFocusedOption !== this.state.focusedOption) {
+      let msg = '';
+      if (nextFocusedOption) {
+        msg = `option ${getOptionLabel(nextFocusedOption)} focused`;
+      }
+      this.announceStatus('feedback', msg);
+    }
+    // Update announce a new message with updated feedback.
+
   }
   componentDidUpdate(prevProps: Props) {
     const { isDisabled, menuIsOpen } = this.props;
@@ -377,7 +393,6 @@ export default class Select extends Component<Props, State> {
   }
   onMenuClose() {
     const { isSearchable } = this.props;
-    console.log('onMenuClose is being called');
     this.setState({
       instructions: `Select is focused ${ isSearchable ? ',type to refine list' : '' }, press Down to open the menu`,
     });
@@ -518,11 +533,14 @@ export default class Select extends Component<Props, State> {
           selectValue.filter(i => this.getOptionValue(i) !== candidate),
           'deselect-option'
         );
+        this.announceStatus('feedback', `option ${this.getOptionLabel(newValue)}, deselected.`);
       } else {
         this.setValue([...selectValue, newValue], 'select-option');
+        this.announceStatus('feedback', `option ${this.getOptionLabel(newValue)}, selected.`);
       }
     } else {
       this.setValue(newValue, 'select-option');
+      this.announceStatus('feedback', `option ${this.getOptionLabel(newValue)}, selected.`);
     }
 
     if (blurInputOnSelect) {
@@ -537,6 +555,7 @@ export default class Select extends Component<Props, State> {
       action: 'remove-value',
       removedValue,
     });
+    this.announceStatus('feedback', `value ${this.getOptionLabel(removedValue)} removed`);
     this.focusInput();
   };
   clearValue = () => {
@@ -843,9 +862,9 @@ export default class Select extends Component<Props, State> {
       this.props.onFocus(event);
     }
     this.inputIsHiddenAfterUpdate = false;
+    this.announceStatus('instructions', `Select is focused ${ isSearchable ? ', type to refine list' : '' }, press Down to open the menu`,);
     this.setState({
       isFocused: true,
-      instructions: `Select is focused, ${ isSearchable ? 'type to refine list' : '' } press Down to open the menu`,
     });
     if (this.openAfterFocus || this.props.openMenuOnFocus) {
       this.openMenu('first');
@@ -853,7 +872,6 @@ export default class Select extends Component<Props, State> {
     this.openAfterFocus = false;
   };
   onInputBlur = (event: SyntheticFocusEvent<HTMLInputElement>) => {
-    console.log('onInputBlur is being called');
     if (this.props.onBlur) {
       this.props.onBlur(event);
     }
@@ -1084,7 +1102,7 @@ export default class Select extends Component<Props, State> {
   constructAnnouncement () {
     const { screenReaderStatus, inputValue } = this.props;
     const { feedback } = this.state;
-    return `${feedback} ${screenReaderStatus({ count: this.countOptions() })} ${inputValue ? `for search term ${inputValue}` : ''}`;
+    return `${feedback} ${screenReaderStatus({ count: this.countOptions() })} ${inputValue ? `for search term ${inputValue}` : ' '}`;
   }
   renderAssertive () {
     return (

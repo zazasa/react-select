@@ -764,6 +764,11 @@ var Select$1 = function (_React$Component) {
 			if (this.state.inputValue && this.props.value !== nextProps.value && nextProps.onSelectResetsInput) {
 				this.setState({ inputValue: this.handleInputValueChange('') });
 			}
+
+			console.log(nextProps);
+			if (nextProps.onSelectUpdatesInput) {
+				this.setState({ inputValue: this.handleInputValueChange(nextProps.value[nextProps.valueKey]) });
+			}
 		}
 	}, {
 		key: 'componentDidUpdate',
@@ -1962,6 +1967,7 @@ Select$1.propTypes = {
 	onMenuScrollToBottom: PropTypes.func, // fires when the menu is scrolled to the bottom; can be used to paginate options
 	onOpen: PropTypes.func, // fires when the menu is opened
 	onSelectResetsInput: PropTypes.bool, // whether input is cleared on select (works only for multiselect)
+	onSelectUpdatesInput: PropTypes.bool, // whether input is updated with selected value on select
 	onValueClick: PropTypes.func, // onClick handler for value labels: function (value, event) {}
 	openOnClick: PropTypes.bool, // boolean to control opening the menu when the control is clicked
 	openOnFocus: PropTypes.bool, // always open options menu on focus
@@ -2019,6 +2025,7 @@ Select$1.defaultProps = {
 	onBlurResetsInput: true,
 	onCloseResetsInput: true,
 	onSelectResetsInput: true,
+	onSelectUpdatesInput: false,
 	openOnClick: true,
 	optionComponent: Option,
 	pageSize: 5,
